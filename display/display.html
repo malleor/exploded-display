@@ -1,9 +1,84 @@
+<html>
+<head>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+        #display-wrapper {
+            display: flex;
+            flex-flow: row wrap;
+        }
+        .display-pixel {
+            width: 20px;
+            height: 20px;
+            background-color: yellow;
+            border: 1px solid red;
+            margin: -1px;
+        }
+    </style>
+</head>
 <body>
+    <div id="display-wrapper"/>
+    
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+    
+    <script src="//code.jquery.com/jquery-3.4.1.slim.js" crossorigin="anonymous"></script>
+    
     <script type="text/javascript" charset="utf-8">
-        var socket = io();
-        socket.on('connect', function() {
-            socket.emit('message', 'I\'m connected!');
-        });
+        var server = (function(){
+            var socket = io();
+            socket.on('connect', function() {
+                socket.emit('handshake', (ack) => {
+                    if(ack === 'ack') {
+                        console.log('made a proper handshake with the server');
+                        
+                        display.init();
+                    } else {
+                        console.error('improper handshake! server returned: ', ack);
+                    }
+                });
+            });
+            
+            return {}
+        })();
+        
+        var display = (function(){
+            var getUrlParams = function(search) {
+                let hashes = search.slice(search.indexOf('?') + 1).split('&');
+                let params = {};
+                hashes.map(hash => {
+                    let [key, val] = hash.split('=');
+                    params[key] = decodeURIComponent(val);
+                    params[key] = parseInt(params[key]) || params[key];
+                })
+
+                return params;
+            }
+            
+            var init = function(){
+                console.group('initialising display');
+                
+                let params = getUrlParams(window.location.search);
+                console.log('resolution:', params.res_x, params.res_y);
+                
+                let wrapper = $('#display-wrapper');
+                console.log(wrapper);
+                for(let j=0; j<params.res_y; ++j)
+                    for(let i=0; i<params.res_x; ++i)
+                        wrapper.append($(document.createElement('div')).addClass('display-pixel'));
+                
+                $('.display-pixel')
+                    .css('width', (100.0/params.res_x)+'vw')
+                    .css('height', (100.0/params.res_y)+'vh');
+                
+                console.groupEnd();
+            }
+            
+            return {
+                'init': init
+            };
+        })();
     </script>
-<body>
+</body>
+</html>
