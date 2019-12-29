@@ -1,1 +1,11 @@
-good to go
+# Installing
+
+```
+make install
+```
+
+# Developing
+
+```
+make notebook
+```
