@@ -1,0 +1,13 @@
+[Unit]
+Description=jupyter notebook for exploded-display
+
+[Service]
+Type=simple
+ExecStart=make notebook
+User=pi
+WorkingDirectory=/opt/exploded-display/
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
