@@ -4,6 +4,7 @@
         html, body {
             margin: 0;
             padding: 0;
+            background-color: black;
         }
         #display-wrapper {
             display: flex;
@@ -12,9 +13,12 @@
         .display-pixel {
             width: 20px;
             height: 20px;
-            background-color: yellow;
-            border: 1px solid red;
-            margin: -1px;
+            background-color: transparent;
+/*             border: 1px solid gray; */
+/*             margin: -1px; */
+        }
+        .highlight {
+            background-color: white;
         }
     </style>
 </head>
@@ -27,7 +31,9 @@
     
     <script type="text/javascript" charset="utf-8">
         var server = (function(){
-            var socket = io();
+            var socket = io('/display');
+            
+            // connected to the server
             socket.on('connect', function() {
                 socket.emit('handshake', (ack) => {
                     if(ack === 'ack') {
@@ -38,6 +44,12 @@
                         console.error('improper handshake! server returned: ', ack);
                     }
                 });
+            });
+            
+            // pixel highlight request
+            socket.on('hightlight', function(x ,y) {
+                display.highlight(x, y);
+                return 'hightlighted';
             });
             
             return {}
@@ -54,7 +66,7 @@
                 })
 
                 return params;
-            }
+            };
             
             var init = function(){
                 console.group('initialising display');
@@ -64,19 +76,29 @@
                 
                 let wrapper = $('#display-wrapper');
                 console.log(wrapper);
-                for(let j=0; j<params.res_y; ++j)
-                    for(let i=0; i<params.res_x; ++i)
-                        wrapper.append($(document.createElement('div')).addClass('display-pixel'));
+                for(let y=0; y<params.res_y; ++y)
+                    for(let x=0; x<params.res_x; ++x)
+                        wrapper.append($(document.createElement('div'))
+                                           .addClass('display-pixel')
+                                           .addClass('x-'+x)
+                                           .addClass('y-'+y));
                 
                 $('.display-pixel')
                     .css('width', (100.0/params.res_x)+'vw')
                     .css('height', (100.0/params.res_y)+'vh');
                 
                 console.groupEnd();
-            }
+            };
+            
+            var highlight = function(x, y) {
+                console.log('hightlighting pixel:', x, y);
+                $('.display-pixel').removeClass('highlight');
+                $(`.x-${x}.y-${y}`).addClass('highlight');
+            };
             
             return {
-                'init': init
+                'init': init,
+                'highlight': highlight
             };
         })();
     </script>
