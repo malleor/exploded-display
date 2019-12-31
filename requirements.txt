@@ -2,3 +2,7 @@ jupyter
 flask
 flask-socketio
 requests
+opencv-python
+opencv-contrib-python==4.1.0.25
+requests
+matplotlib

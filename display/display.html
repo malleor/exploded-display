@@ -49,10 +49,20 @@
             // pixel highlight request
             socket.on('hightlight', function(x ,y) {
                 display.highlight(x, y);
-                return 'hightlighted';
             });
             
-            return {}
+            // image show request
+            socket.on('show_image', function(img) {
+                display.show_image(img);
+            });
+            
+            var broadcast_resolution = function(w, h) {
+                socket.emit('resolution', w, h);
+            };
+            
+            return {
+                'broadcast_resolution': broadcast_resolution
+            }
         })();
         
         var display = (function(){
@@ -72,20 +82,26 @@
                 console.group('initialising display');
                 
                 let params = getUrlParams(window.location.search);
-                console.log('resolution:', params.res_x, params.res_y);
+                console.log('resolution will be:', params.res_x, params.res_y);
                 
                 let wrapper = $('#display-wrapper');
-                console.log(wrapper);
                 for(let y=0; y<params.res_y; ++y)
                     for(let x=0; x<params.res_x; ++x)
                         wrapper.append($(document.createElement('div'))
                                            .addClass('display-pixel')
                                            .addClass('x-'+x)
                                            .addClass('y-'+y));
-                
                 $('.display-pixel')
                     .css('width', (100.0/params.res_x)+'vw')
                     .css('height', (100.0/params.res_y)+'vh');
+                console.log('created pixels');
+                
+                display_width = params.res_x;
+                display_height = params.res_y;
+                console.log(`saved resolution as ${display_width}x${display_height}`);
+                
+                server.broadcast_resolution(display_width, display_height);
+                console.log('broadcasted resolution update');
                 
                 console.groupEnd();
             };
@@ -96,9 +112,37 @@
                 $(`.x-${x}.y-${y}`).addClass('highlight');
             };
             
+            var show_image = function(img) {
+                console.group('showing an image');
+                console.log('image:', img);
+                window.img = img;
+                
+                console.assert(img.width == display_width, 'resolution doesn\'t match!');
+                console.assert(img.height == display_height, 'resolution doesn\'t match!');
+                
+                $('.display-pixel').removeClass('highlight');
+                console.time('show_image');
+                let arr = new Uint8Array(img.image);
+                for(let y=0; y<display_height; ++y) {
+                    for(let x=0; x<display_width; ++x) {
+                        let i = (x + y*display_width)*3,
+                            r = arr[i],
+                            g = arr[i+1],
+                            b = arr[i+2];
+                        $(`.x-${x}.y-${y}`).css('background-color', `rgb(${r}, ${g}, ${b})`);
+                    }
+                }
+                console.timeEnd('show_image');
+                
+                console.groupEnd();
+            };
+            
+            var display_width = 0,
+                display_height = 0;
             return {
                 'init': init,
-                'highlight': highlight
+                'highlight': highlight,
+                'show_image': show_image
             };
         })();
     </script>
