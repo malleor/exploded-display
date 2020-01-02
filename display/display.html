@@ -35,13 +35,13 @@
             
             // connected to the server
             socket.on('connect', function() {
-                socket.emit('handshake', (ack) => {
-                    if(ack === 'ack') {
+                socket.emit('handshake', (resp) => {
+                    if(resp === 'ok') {
                         console.log('made a proper handshake with the server');
                         
                         display.init();
                     } else {
-                        console.error('improper handshake! server returned: ', ack);
+                        console.error('improper handshake! server returned: ', resp);
                     }
                 });
             });
